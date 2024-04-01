@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Location and Speed Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/dat-sdk/dist/index.min.js"></script>
+</head>
+<body>
+<h1>Location and Speed Tracker</h1>
+<p>Your current speed: <span id="speed">0</span> m/s</p>
+<div id="dat-archive"></div>
+
+<script>
+    let speedElement = document.getElementById('speed');
+    let locationData = [];
+	const DatSDK = window.DatArchive;
+
+    async function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(showPosition);
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    }
+
+    function showPosition(position) {
+        let speed = position.coords.speed || 0;
+        speedElement.textContent = speed + ' m/s';
+
+        let latitude = position.coords.latitude;
+        let longitude = position.coords.longitude;
+
+        locationData.push({
+            timestamp: new Date().toISOString(),
+            latitude: latitude,
+            longitude: longitude,
+            speed: speed
+        });
+
+        saveLocationDataToDat(locationData);
+    }
+
+    async function saveLocationDataToDat(data) {
+    	
+    	const archiveLocation = localStorage.getItem('archive');
+    	if (!archiveLocation) {
+	        const archive = await DatSDK.create();
+        } else {
+        	const archive = DatArchive.load(archiveLocation)
+        }
+
+        const jsonData = JSON.stringify(data);
+	        await archive.writeFile('/locationData.json', jsonData);
+	        console.log(`Location data saved to Dat archive: ${archive.url}`);
+    }
+
+    getLocation();
+</script>
+</body>
+</html>
